@@ -1,27 +1,41 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
 namespace ToDoWebApp.Models
 {
     [Table("todos")]
-    public class TodoItem : BaseModel
+    public class ToDoItems : BaseModel
     {
-        [PrimaryKey("id", false)] public Guid Id { get; set; }
-        [Column("user_id")] public Guid UserId { get; set; }
+        [PrimaryKey("id", false)] 
+        public Guid Id { get; set; }
 
-        [Column("status")]
-        [Required(ErrorMessage = "Status is required.")]
-        public string Status { get; set; } = "WIP";
+        [Column("user_id")] 
+        public Guid UserId { get; set; }
 
-        [Column("category")] public string? Category { get; set; }
+        [Column("status")] 
+        public string Status { get; set; } = string.Empty;
 
-        [Column("description")]
-        [Required(ErrorMessage = "Description is required.")]
-        [MaxLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]
+        [Column("category")] 
+        public string Category { get; set; } = string.Empty;
+
+        [Column("description")] 
         public string Description { get; set; } = string.Empty;
 
-        [Column("created_at")] public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        [Column("created_at")] 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")] 
+        public DateTime? UpdatedAt { get; set; }
+
+        [JsonIgnore]
+        [IgnoreDataMember]
+        public bool IsCompleted => Status == "DONE";
+
+        [JsonIgnore]
+        [IgnoreDataMember]
+        public bool IsSelected { get; set; } = false;
     }
 }

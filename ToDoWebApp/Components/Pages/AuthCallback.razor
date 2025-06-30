@@ -3,6 +3,7 @@
 @inject IJSRuntime JSRuntime
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <PageTitle>Email Confirmation</PageTitle>
 
@@ -56,10 +57,12 @@
     private bool _isProcessing = true;
     private bool _isSuccess = false;
     private string? _errorMessage;
+    private bool _disposed = false;
+    private CancellationTokenSource _cancellationTokenSource = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !_disposed)
         {
             await HandleAuthCallback();
         }
@@ -69,6 +72,8 @@
     {
         try
         {
+            if (_disposed) return;
+
             // Get the URL hash fragment containing the auth tokens
             var urlWithHash = await JSRuntime.InvokeAsync<string>("eval", "window.location.href");
             
@@ -91,11 +96,14 @@
                         {
                             _isSuccess = true;
                             _isProcessing = false;
-                            StateHasChanged();
+                            if (!_disposed) StateHasChanged();
                             
                             // Auto-redirect after 2 seconds
-                            await Task.Delay(2000);
-                            NavigateToHome();
+                            await Task.Delay(2000, _cancellationTokenSource.Token);
+                            if (!_disposed)
+                            {
+                                NavigateToHome();
+                            }
                             return;
                         }
                     }
@@ -104,13 +112,24 @@
             
             _errorMessage = "Invalid confirmation link or session expired.";
         }
+        catch (OperationCanceledException)
+        {
+            // Expected when component is disposed
+            return;
+        }
         catch (Exception)
         {
-            _errorMessage = "An error occurred during email confirmation. Please try again.";
+            if (!_disposed)
+            {
+                _errorMessage = "An error occurred during email confirmation. Please try again.";
+            }
         }
         
-        _isProcessing = false;
-        StateHasChanged();
+        if (!_disposed)
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
     }
 
     private Dictionary<string, string> ParseUrlFragment(string fragment)
@@ -132,16 +151,26 @@
 
     private void NavigateToHome()
     {
-        Navigation.NavigateTo("/", forceLoad: true);
+        if (_disposed) return;
+        Navigation.NavigateTo("/");
     }
 
     private void NavigateToLogin()
     {
+        if (_disposed) return;
         Navigation.NavigateTo("/login");
     }
 
     private void NavigateToSignup()
     {
+        if (_disposed) return;
         Navigation.NavigateTo("/signup");
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
     }
 }

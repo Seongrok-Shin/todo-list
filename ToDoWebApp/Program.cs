@@ -1,6 +1,11 @@
 using ToDoWebApp.Components;
 using Supabase;
 using ToDoWebApp.Services;
+using DotNetEnv;
+
+// Load environment variables from .env file
+Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -10,12 +15,13 @@ builder.Services.AddRazorComponents()
 // Add Supabase client
 builder.Services.AddSingleton(provider =>
 {
-    var url = builder.Configuration["Supabase:Url"];
-    var key = builder.Configuration["Supabase:AnonKey"];
+    // Read from environment variables directly
+    var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
+    var key = Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY");
 
     if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(key))
     {
-        throw new InvalidOperationException("Supabase URL or Anon Key is not set up yet. Please check appsettings.json.");
+        throw new InvalidOperationException("Supabase URL or Anon Key is not set up yet. Please check your .env file.");
     }
 
     return new Supabase.Client(url, key, new Supabase.SupabaseOptions

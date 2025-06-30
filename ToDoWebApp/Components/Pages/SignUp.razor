@@ -14,7 +14,7 @@
                     <h3 class="text-center mb-0">Create Account</h3>
                 </div>
                 <div class="card-body">
-                    <EditForm Model="@_signUpModel" OnValidSubmit="@HandleSignUp">
+                    <EditForm Model="@_signUpModel" OnValidSubmit="@HandleSignUp" FormName="SignUpForm">
                         <DataAnnotationsValidator />
                         
                         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -109,16 +109,35 @@
                 if (user.EmailConfirmedAt == null)
                 {
                     _successMessage = "Account created successfully! A confirmation email has been sent. Please check your email to verify your account.";
+                    
+                    // Auto-redirect to home after showing success message for 3 seconds
+                    await Task.Delay(3000);
+                    NavManager.NavigateTo("/");
                 }
                 else
                 {
+                    // Email is already confirmed, redirect immediately
                     _successMessage = "Account created successfully!";
-                    NavManager.NavigateTo("/", forceLoad: true);
+                    StateHasChanged();
+                    await Task.Delay(1000); // Brief delay to show success message
+                    NavManager.NavigateTo("/");
                 }
             }
             else
             {
-                _errorMessage = error ?? "An error occurred during sign up. Please try again.";
+                // Check if the error is about user already exists
+                if (!string.IsNullOrEmpty(error) && 
+                    (error.Contains("User already registered") || 
+                     error.Contains("already exists") || 
+                     error.Contains("already registered") ||
+                     error.Contains("duplicate")))
+                {
+                    _errorMessage = "An account with this email address already exists. Please try signing in instead.";
+                }
+                else
+                {
+                    _errorMessage = error ?? "An error occurred during sign up. Please try again.";
+                }
             }
         }
         catch (Exception)
