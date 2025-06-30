@@ -8,7 +8,7 @@
 
 <PageTitle>My TODO List</PageTitle>
 
-<div class="container mt-4">
+<div class="container-custom">
     @if (!AuthService.IsLoggedIn)
     {
         <div class="alert alert-warning text-center" role="alert">
@@ -85,7 +85,7 @@
         }
         else if (_todoItems == null || !_todoItems.Any())
         {
-            <div class="text-center py-5">
+            <div class="text-center py-5 empty-state">
                 <i class="bi bi-inbox display-1 text-muted"></i>
                 <h4 class="text-muted mt-3">No TODO items yet</h4>
                 <p class="text-muted">Create your first TODO item to get started!</p>

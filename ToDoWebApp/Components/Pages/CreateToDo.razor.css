@@ -1,0 +1,242 @@
+﻿/* CreateToDo.razor.css - Monochrome Theme */
+
+.card-custom {
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border: 1px solid #404040;
+    color: #e0e0e0;
+}
+
+.card-header-custom {
+    background-color: #000000;
+    color: #ffffff;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 1.5rem;
+    border-bottom: 1px solid #404040;
+}
+
+.card-title-custom {
+    font-weight: 600;
+    margin-bottom: 0;
+    color: #ffffff;
+}
+
+.card-body-custom {
+    padding: 2rem;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+.input-method-toggle .btn {
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    margin: 0 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid #555555;
+}
+
+.input-method-toggle .btn:first-child {
+    margin-left: 0;
+}
+
+.input-method-toggle .btn:last-child {
+    margin-right: 0;
+}
+
+.input-method-toggle .btn-primary {
+    background-color: #404040;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.input-method-toggle .btn-primary:hover {
+    background-color: #606060;
+    border-color: #606060;
+}
+
+.input-method-toggle .btn-outline-secondary {
+    background-color: transparent;
+    color: #b0b0b0;
+    border-color: #555555;
+}
+
+.input-method-toggle .btn-outline-secondary:hover {
+    background-color: #404040;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.form-label-custom {
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    background-color: #2a2a2a;
+    border-color: #555555;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    color: #e0e0e0;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #2a2a2a;
+    border-color: #666666;
+    box-shadow: 0 0 0 0.2rem rgba(64, 64, 64, 0.3);
+    color: #ffffff;
+}
+
+.form-control::placeholder {
+    color: #888888;
+}
+
+.form-select option {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+}
+
+.btn-primary {
+    background-color: #404040;
+    border-color: #404040;
+    color: #ffffff;
+    transition: background-color 0.3s ease;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #606060;
+    border-color: #606060;
+}
+
+.btn-primary:disabled {
+    background-color: #333333;
+    border-color: #333333;
+    opacity: 0.6;
+}
+
+.btn-outline-secondary {
+    color: #b0b0b0;
+    border-color: #555555;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #404040;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.alert-danger {
+    background-color: #3a2a2a;
+    border-color: #555555;
+    color: #e0e0e0;
+}
+
+.alert-success {
+    background-color: #2a3a2a;
+    border-color: #555555;
+    color: #e0e0e0;
+}
+
+.alert-warning {
+    background-color: #3a3a3a;
+    border-color: #555555;
+    color: #e0e0e0;
+}
+
+.text-danger {
+    color: #ff8080 !important;
+}
+
+.form-text {
+    color: #888888;
+}
+
+.form-text small {
+    color: #888888;
+}
+
+.card {
+    background-color: #2a2a2a;
+    border-color: #404040;
+    color: #e0e0e0;
+}
+
+.card-header {
+    background-color: #1a1a1a;
+    border-color: #404040;
+    color: #ffffff;
+}
+
+.card-body {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+}
+
+.list-unstyled li {
+    color: #e0e0e0;
+}
+
+.badge.bg-secondary {
+    background-color: #555555 !important;
+}
+
+.badge.bg-warning {
+    background-color: #666666 !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-info {
+    background-color: #444444 !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-success {
+    background-color: #3a3a3a !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-primary {
+    background-color: #404040 !important;
+    color: #ffffff !important;
+}
+
+.spinner-border {
+    color: #ffffff;
+}
+
+.container {
+    color: #e0e0e0;
+}
+
+.container h6 {
+    color: #e0e0e0;
+}
+
+.container h5 {
+    color: #ffffff;
+}
+
+.container h4 {
+    color: #ffffff;
+}
+
+.container p {
+    color: #e0e0e0;
+}
+
+.container strong {
+    color: #ffffff;
+}
