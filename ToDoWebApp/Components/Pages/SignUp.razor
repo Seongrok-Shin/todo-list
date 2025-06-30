@@ -106,22 +106,13 @@
             
             if (user != null)
             {
-                if (user.EmailConfirmedAt == null)
-                {
-                    _successMessage = "Account created successfully! A confirmation email has been sent. Please check your email to verify your account.";
-                    
-                    // Auto-redirect to home after showing success message for 3 seconds
-                    await Task.Delay(3000);
-                    NavManager.NavigateTo("/");
-                }
-                else
-                {
-                    // Email is already confirmed, redirect immediately
-                    _successMessage = "Account created successfully!";
-                    StateHasChanged();
-                    await Task.Delay(1000); // Brief delay to show success message
-                    NavManager.NavigateTo("/");
-                }
+                // Show success message and redirect regardless of email confirmation status
+                _successMessage = "Account created successfully! Please check your email to verify your account.";
+                StateHasChanged();
+                
+                // Auto-redirect to home after showing success message for 2 seconds
+                await Task.Delay(2000);
+                NavManager.NavigateTo("/");
             }
             else
             {

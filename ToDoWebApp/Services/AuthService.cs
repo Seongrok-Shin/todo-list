@@ -64,10 +64,13 @@ namespace ToDoWebApp.Services
                 var response = await _supabaseClient.Auth.SignUp(email, password);
                 if (response?.User != null)
                 {
-                    // This is a new user
-                    CurrentUser = response.User;
+                    // Don't automatically log in the user after signup
+                    // Just return the user info for confirmation but don't set CurrentUser
+                    await _supabaseClient.Auth.SignOut(); // Ensure we're signed out
+                    CurrentUser = null;
                     OnAuthStateChanged?.Invoke();
-                    return (response.User, response.User.EmailConfirmedAt == null ? "Sign up successful! Email confirmation required." : null);
+                    
+                    return (response.User, response.User.EmailConfirmedAt == null ? "Sign up successful! Email confirmation required." : "Sign up successful!");
                 }
                 return (null, "Sign up failed: Unknown error");
             }

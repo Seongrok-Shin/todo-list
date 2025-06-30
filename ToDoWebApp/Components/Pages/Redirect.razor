@@ -1,5 +1,6 @@
 ﻿@page "/redirect"
 @inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
 @using Microsoft.AspNetCore.Components
 
 <!DOCTYPE html>
@@ -30,7 +31,7 @@
     {
         if (firstRender)
         {
-            var blazorUrl = Environment.GetEnvironmentVariable("BLAZOR_APP_URL") ?? "http://localhost:5168";
+            var blazorUrl = Configuration["BLAZOR_APP_URL"] ?? "http://localhost:5168";
             await JSRuntime.InvokeVoidAsync("redirectToApp", blazorUrl);
         }
     }

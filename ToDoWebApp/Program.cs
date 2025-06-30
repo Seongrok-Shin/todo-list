@@ -8,6 +8,9 @@ Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add environment variables to configuration
+builder.Configuration.AddEnvironmentVariables();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -15,13 +18,15 @@ builder.Services.AddRazorComponents()
 // Add Supabase client
 builder.Services.AddSingleton(provider =>
 {
-    // Read from environment variables directly
-    var url = Environment.GetEnvironmentVariable("SUPABASE_URL");
-    var key = Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY");
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    
+    // Try to get from configuration first, then fallback to environment variables
+    var url = configuration["SUPABASE_URL"] ?? Environment.GetEnvironmentVariable("SUPABASE_URL");
+    var key = configuration["SUPABASE_ANON_KEY"] ?? Environment.GetEnvironmentVariable("SUPABASE_ANON_KEY");
 
     if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(key))
     {
-        throw new InvalidOperationException("Supabase URL or Anon Key is not set up yet. Please check your .env file.");
+        throw new InvalidOperationException("Supabase URL or Anon Key is not set up yet. Please check your .env file or configuration.");
     }
 
     return new Supabase.Client(url, key, new Supabase.SupabaseOptions
