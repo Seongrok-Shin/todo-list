@@ -31,7 +31,9 @@
     {
         if (firstRender)
         {
-            var blazorUrl = Configuration["BLAZOR_APP_URL"] ?? "http://localhost:5168";
+            var blazorUrl = Environment.GetEnvironmentVariable("BLAZOR_APP_URL") 
+                         ?? Configuration["BLAZOR_APP_URL"] 
+                         ?? "http://localhost:5168";
             await JSRuntime.InvokeVoidAsync("redirectToApp", blazorUrl);
         }
     }
