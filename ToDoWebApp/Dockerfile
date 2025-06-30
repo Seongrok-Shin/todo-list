@@ -11,9 +11,8 @@ RUN dotnet restore ./ToDoWebApp.csproj
 # Copy the entire source code
 COPY ./ ./
 
-# Build the application
-WORKDIR /app/ToDoWebApp
-RUN dotnet publish -c Release -o /app/publish --no-restore
+# Build the application (stay in /app directory where the .csproj file is)
+RUN dotnet publish ./ToDoWebApp.csproj -c Release -o /app/publish --no-restore
 
 # Use the official ASP.NET Core runtime image for the final stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
