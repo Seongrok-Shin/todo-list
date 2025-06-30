@@ -1,7 +1,7 @@
 ﻿using Supabase;
 using System.Text.RegularExpressions;
 using Supabase.Postgrest;
-using TodoBlazorSupabaseApp.Models;
+using ToDoWebApp.Models;
 
 namespace ToDoWebApp.Services
 {

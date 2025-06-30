@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
-namespace TodoBlazorSupabaseApp.Models
+namespace ToDoWebApp.Models
 {
     [Table("todos")]
     public class TodoItem : BaseModel
