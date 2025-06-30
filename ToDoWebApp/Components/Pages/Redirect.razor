@@ -11,8 +11,7 @@
         window.redirectToApp = (blazorUrl) => {
             // Extract the hash parameters from the current URL
             const hash = window.location.hash;
-            
-            // Redirect to the correct Blazor app URL with the same parameters
+
             if (hash) {
                 window.location.href = `${blazorUrl}/auth/callback${hash}`;
             } else {
@@ -23,15 +22,25 @@
 </head>
 <body>
     <p>Redirecting to your application...</p>
+    <p>Target URL: @blazorUrl</p>
 </body>
 </html>
 
 @code {
+    private string blazorUrl = "";
+    
+    protected override void OnInitialized()
+    {
+        blazorUrl = Environment.GetEnvironmentVariable("BLAZOR_APP_URL") 
+                 ?? Environment.GetEnvironmentVariable("RENDER_EXTERNAL_URL")
+                 ?? Configuration["BLAZOR_APP_URL"] 
+                 ?? "https://todo-list-pr-7.onrender.com";
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var blazorUrl = Configuration["BLAZOR_APP_URL"] ?? "http://localhost:5168";
             await JSRuntime.InvokeVoidAsync("redirectToApp", blazorUrl);
         }
     }
