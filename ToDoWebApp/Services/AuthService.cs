@@ -92,11 +92,13 @@ namespace ToDoWebApp.Services
             }
             finally
             {
-                // Always clear user state and navigate, regardless of success or failure
+                // Always clear user state first
                 CurrentUser = null;
                 OnAuthStateChanged?.Invoke();
-                _navigationManager.NavigateTo("/", forceLoad: true); // Navigate to home and refresh entire app
             }
+            
+            // Navigate without forceLoad to avoid TaskCanceledException
+            _navigationManager.NavigateTo("/");
         }
 
         // Check if user is logged in
@@ -116,6 +118,23 @@ namespace ToDoWebApp.Services
             {
                 _logger.LogError(ex, "Error refreshing user");
                 return Task.CompletedTask;
+            }
+        }
+
+        // Add this new method to handle session from email confirmation
+        public async Task<bool> SetSessionFromTokens(string accessToken, string refreshToken)
+        {
+            try
+            {
+                await _supabaseClient.Auth.SetSession(accessToken, refreshToken);
+                CurrentUser = _supabaseClient.Auth.CurrentUser;
+                OnAuthStateChanged?.Invoke();
+                return CurrentUser != null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting session from tokens");
+                return false;
             }
         }
     }
