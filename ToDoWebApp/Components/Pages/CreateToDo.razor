@@ -46,7 +46,7 @@
                     @if (!_useFormMode)
                     {
                     @* Text Input Mode *@
-                    <EditForm Model="this" OnValidSubmit="HandleTextSubmit" FormName="createTodoTextForm">
+                    <EditForm Model="this" OnSubmit="HandleTextSubmit" FormName="createTodoTextForm">
                         <DataAnnotationsValidator/>
 
                         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -96,7 +96,8 @@ Examples:
                             <button type="button" class="btn btn-outline-secondary me-md-2" @onclick="ClearTextForm">
                                 <i class="bi bi-arrow-clockwise me-1"></i>Clear
                             </button>
-                            <button type="submit" class="btn btn-primary" disabled="@_isSubmitting">
+                            <button type="button" class="btn btn-primary" disabled="@_isSubmitting"
+                                    @onclick="HandleDirectClick">
                                 @if (_isSubmitting)
                                 {
                                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -325,7 +326,13 @@ _successMessage = string.Empty;
 
 private async Task HandleTextSubmit()
 {
-if (_isSubmitting) return;
+Console.WriteLine("=== HandleTextSubmit called ===");
+
+if (_isSubmitting)
+{
+Console.WriteLine("Already submitting, returning");
+return;
+}
 
 _errorMessage = string.Empty;
 _successMessage = string.Empty;
@@ -334,9 +341,23 @@ StateHasChanged();
 
 try
 {
+
+if (string.IsNullOrWhiteSpace(TodoText))
+{
+_errorMessage = "Please enter TODO text before submitting.";
+return;
+}
+
+if (!AuthService.IsLoggedIn)
+{
+_errorMessage = "You must be logged in to create TODO items.";
+return;
+}
+
 await TodoService.AddTodoItemsFromTextAsync(TodoText);
+
 _successMessage = "TODO items created successfully!";
-TodoText = string.Empty; // Clear form after successful submission
+TodoText = string.Empty;
 
 // Navigate to todo list after a short delay to show success message
 await Task.Delay(1500);
@@ -346,7 +367,7 @@ catch (ArgumentException ex)
 {
 _errorMessage = ex.Message;
 }
-catch (UnauthorizedAccessException)
+catch (UnauthorizedAccessException ex)
 {
 _errorMessage = "You must be logged in to create TODO items.";
 NavManager.NavigateTo("/login", forceLoad: true);
@@ -354,7 +375,6 @@ NavManager.NavigateTo("/login", forceLoad: true);
 catch (Exception ex)
 {
 _errorMessage = $"An error occurred while creating TODO items: {ex.Message}";
-Console.WriteLine($"Error creating TODO items: {ex.Message}");
 }
 finally
 {
@@ -407,7 +427,6 @@ NavManager.NavigateTo("/login", forceLoad: true);
 catch (Exception ex)
 {
 _errorMessage = $"An error occurred while creating TODO item: {ex.Message}";
-Console.WriteLine($"Error creating TODO item: {ex.Message}");
 }
 finally
 {
@@ -438,6 +457,11 @@ private void HandleInputMethodChange(bool useFormMode)
 _useFormMode = useFormMode;
 ClearMessages();
 StateHasChanged();
+}
+
+private async Task HandleDirectClick()
+{
+await HandleTextSubmit();
 }
 
 public void Dispose()

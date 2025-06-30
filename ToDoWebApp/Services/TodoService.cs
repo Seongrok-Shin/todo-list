@@ -70,26 +70,30 @@ namespace ToDoWebApp.Services
         // Parse a single TODO line
         private ToDoItems? ParseTodoLine(string line)
         {
-            // Regex pattern to match [STATUS] [CATEGORY] Description
-            var pattern = @"^\[(\w+)\]\s*\[(\w+)\]\s*(.+)$";
+            // 더 유연한 정규식 패턴 - 특수문자도 허용
+            var pattern = @"^\[([^\]]+)\]\s*\[([^\]]+)\]\s*(.+)$";
             var match = Regex.Match(line, pattern, RegexOptions.IgnoreCase);
 
             if (!match.Success)
             {
-                _logger.LogWarning($"Invalid TODO format: {line}");
+                _logger.LogWarning($"Invalid TODO format: '{line}' - Expected format: [STATUS] [CATEGORY] Description");
                 return null;
             }
 
-            var status = match.Groups[1].Value.ToUpper();
-            var category = match.Groups[2].Value.ToUpper();
+            var status = match.Groups[1].Value.Trim().ToUpper();
+            var category = match.Groups[2].Value.Trim().ToUpper();
             var description = match.Groups[3].Value.Trim();
+
+            _logger.LogInformation($"Parsing TODO - Status: '{status}', Category: '{category}', Description: '{description}'");
 
             // Validate status
             if (!IsValidStatus(status))
             {
-                _logger.LogWarning($"Invalid status '{status}' in line: {line}");
+                _logger.LogWarning($"Invalid status '{status}' in line: {line}. Valid statuses: TODO, WIP, REVIEW, DONE");
                 return null;
             }
+
+            _logger.LogInformation($"Successfully parsed TODO item with status: {status}");
 
             return new ToDoItems
             {
@@ -150,7 +154,6 @@ namespace ToDoWebApp.Services
                 var userId = Guid.Parse(_authService.CurrentUser.Id);
                 _logger.LogInformation($"Attempting to update TODO {todoId} to status {newStatus} for user {userId}");
                 
-                // 먼저 기존 항목을 가져옴
                 var existingItems = await _supabaseClient
                     .From<ToDoItems>()
                     .Where(x => x.Id == todoId && x.UserId == userId)
@@ -163,7 +166,6 @@ namespace ToDoWebApp.Services
 
                 var existingItem = existingItems.Models.First();
                 
-                // 상태와 업데이트 시간만 변경
                 existingItem.Status = newStatus;
                 existingItem.UpdatedAt = DateTime.UtcNow;
 
