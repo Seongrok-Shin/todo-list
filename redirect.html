@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <script>
+        // Extract the hash parameters from the current URL
+        const hash = window.location.hash;
+        
+        // Redirect to the correct Blazor app URL with the same parameters
+        if (hash) {
+            window.location.href = `http://localhost:5168/auth/callback${hash}`;
+        } else {
+            window.location.href = 'http://localhost:5168';
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting to your application...</p>
+</body>
+</html>
+

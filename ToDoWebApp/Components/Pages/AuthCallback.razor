@@ -1,0 +1,147 @@
+﻿@page "/auth/callback"
+@using ToDoWebApp.Services
+@inject IJSRuntime JSRuntime
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Email Confirmation</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    @if (_isProcessing)
+                    {
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <h4>Confirming your email...</h4>
+                        <p class="text-muted">Please wait while we verify your account.</p>
+                    }
+                    else if (_isSuccess)
+                    {
+                        <div class="text-success mb-3">
+                            <svg width="48" height="48" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+                            </svg>
+                        </div>
+                        <h4 class="text-success">Email Confirmed!</h4>
+                        <p class="text-muted mb-4">Your account has been successfully verified.</p>
+                        <button class="btn btn-primary" @onclick="NavigateToHome">Continue to App</button>
+                    }
+                    else if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="text-danger mb-3">
+                            <svg width="48" height="48" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                                <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                                <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+                            </svg>
+                        </div>
+                        <h4 class="text-danger">Confirmation Failed</h4>
+                        <p class="text-muted mb-4">@_errorMessage</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" @onclick="NavigateToLogin">Go to Sign In</button>
+                            <button class="btn btn-outline-secondary" @onclick="NavigateToSignup">Create New Account</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isProcessing = true;
+    private bool _isSuccess = false;
+    private string? _errorMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HandleAuthCallback();
+        }
+    }
+
+    private async Task HandleAuthCallback()
+    {
+        try
+        {
+            // Get the URL hash fragment containing the auth tokens
+            var urlWithHash = await JSRuntime.InvokeAsync<string>("eval", "window.location.href");
+            
+            if (urlWithHash.Contains("#access_token="))
+            {
+                // Parse the hash fragment to get tokens
+                var hashIndex = urlWithHash.IndexOf('#');
+                if (hashIndex >= 0)
+                {
+                    var fragment = urlWithHash.Substring(hashIndex + 1);
+                    var parameters = ParseUrlFragment(fragment);
+                    
+                    if (parameters.TryGetValue("access_token", out var accessToken) &&
+                        parameters.TryGetValue("refresh_token", out var refreshToken))
+                    {
+                        // Use the AuthService method to set the session
+                        var success = await AuthService.SetSessionFromTokens(accessToken, refreshToken);
+                        
+                        if (success && AuthService.IsLoggedIn)
+                        {
+                            _isSuccess = true;
+                            _isProcessing = false;
+                            StateHasChanged();
+                            
+                            // Auto-redirect after 2 seconds
+                            await Task.Delay(2000);
+                            NavigateToHome();
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            _errorMessage = "Invalid confirmation link or session expired.";
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An error occurred during email confirmation. Please try again.";
+        }
+        
+        _isProcessing = false;
+        StateHasChanged();
+    }
+
+    private Dictionary<string, string> ParseUrlFragment(string fragment)
+    {
+        var parameters = new Dictionary<string, string>();
+        var pairs = fragment.Split('&');
+        
+        foreach (var pair in pairs)
+        {
+            var keyValue = pair.Split('=', 2);
+            if (keyValue.Length == 2)
+            {
+                parameters[keyValue[0]] = Uri.UnescapeDataString(keyValue[1]);
+            }
+        }
+        
+        return parameters;
+    }
+
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+
+    private void NavigateToSignup()
+    {
+        Navigation.NavigateTo("/signup");
+    }
+}

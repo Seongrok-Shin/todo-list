@@ -1,8 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using ToDoWebApp.Services
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu/>
+        <NavMenu />
     </div>
 
     <main>
@@ -12,8 +13,10 @@
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+<div id="blazor-error-ui">
+    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+        ? "An error has occurred. This application may no longer respond until reloaded."
+        : "An error has occurred. Please reload the page."
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
 </div>

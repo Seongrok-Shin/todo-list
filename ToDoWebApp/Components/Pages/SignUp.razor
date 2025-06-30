@@ -1,0 +1,133 @@
+﻿@page "/signup"
+@using System.ComponentModel.DataAnnotations
+@using ToDoWebApp.Services
+@inject NavigationManager NavManager
+@inject AuthService AuthService
+
+<PageTitle>Sign Up</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="text-center mb-0">Create Account</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@_signUpModel" OnValidSubmit="@HandleSignUp">
+                        <DataAnnotationsValidator />
+                        
+                        @if (!string.IsNullOrEmpty(_errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @_errorMessage
+                            </div>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(_successMessage))
+                        {
+                            <div class="alert alert-success" role="alert">
+                                @_successMessage
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <InputText @bind-Value="_signUpModel.Email" class="form-control" id="email" placeholder="Enter your email" />
+                            <ValidationMessage For="@(() => _signUpModel.Email)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <InputText @bind-Value="_signUpModel.Password" type="password" class="form-control" id="password" placeholder="Enter your password" />
+                            <ValidationMessage For="@(() => _signUpModel.Password)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <InputText @bind-Value="_signUpModel.ConfirmPassword" type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" />
+                            <ValidationMessage For="@(() => _signUpModel.ConfirmPassword)" />
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" disabled="@_isLoading">
+                                @if (_isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    <span>Creating Account...</span>
+                                }
+                                else
+                                {
+                                    <span>Sign Up</span>
+                                }
+                            </button>
+                        </div>
+                    </EditForm>
+
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="/login">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private SignUpModel _signUpModel = new();
+    private string? _errorMessage;
+    private string? _successMessage;
+    private bool _isLoading;
+
+    public class SignUpModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private async Task HandleSignUp()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isLoading = true;
+
+        try
+        {
+            var (user, error) = await AuthService.SignUp(_signUpModel.Email, _signUpModel.Password);
+            
+            if (user != null)
+            {
+                if (user.EmailConfirmedAt == null)
+                {
+                    _successMessage = "Account created successfully! A confirmation email has been sent. Please check your email to verify your account.";
+                }
+                else
+                {
+                    _successMessage = "Account created successfully!";
+                    NavManager.NavigateTo("/", forceLoad: true);
+                }
+            }
+            else
+            {
+                _errorMessage = error ?? "An error occurred during sign up. Please try again.";
+            }
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}
