@@ -5,11 +5,11 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # Copy the project file and restore dependencies
-COPY ToDoWebApp/ToDoWebApp.csproj ToDoWebApp/
-RUN dotnet restore ToDoWebApp/ToDoWebApp.csproj
+COPY ./ToDoWebApp.csproj ./
+RUN dotnet restore ./ToDoWebApp.csproj
 
 # Copy the entire source code
-COPY ToDoWebApp/ ToDoWebApp/
+COPY ./ ./
 
 # Build the application
 WORKDIR /app/ToDoWebApp
