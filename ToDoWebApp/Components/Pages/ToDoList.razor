@@ -1,101 +1,659 @@
 ﻿@page "/todolist"
-@using ToDoWebApp.Models
 @using ToDoWebApp.Services
+@using ToDoWebApp.Models
 @inject TodoService TodoService
-@inject NavigationManager NavManager
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@implements IDisposable
 
-<PageTitle>TODO LIST</PageTitle>
+<PageTitle>My TODO List</PageTitle>
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">My TODO List</h1>
-        <a href="/create-todo" class="btn btn-primary">Add New TODO</a>
-    </div>
-
-    @if (todoItems == null)
+    @if (!AuthService.IsLoggedIn)
     {
-        <p><em>Loading...</em></p>
-    }
-    else if (!todoItems.Any())
-    {
-        <div class="alert alert-info" role="alert">
-            You do not have any TODO Items <a href="/create-todo">Try Add New Todo</a>
+        <div class="alert alert-warning text-center" role="alert">
+            <h4 class="alert-heading">Login Required</h4>
+            <p>You need to <a href="/login" class="alert-link">sign in</a> to view your TODO items.</p>
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-list-check me-2"></i>My TODO List
+            </h2>
+            <div>
+                <a href="/create-todo" class="btn btn-primary me-2">
+                    <i class="bi bi-plus-circle me-1"></i>Add New TODO
+                </a>
+                @if (_todoItems != null && _todoItems.Any())
+                {
+                    <button class="btn btn-danger" @onclick="ShowDeleteAllConfirmation">
+                        <i class="bi bi-trash3 me-1"></i>Delete All
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* Bulk Actions Bar *@
+        @if (_selectedItems.Any())
+        {
+            <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>@_selectedItems.Count</strong> items selected
+                </div>
+                <div class="btn-group" role="group">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" 
+                                @onclick="ToggleStatusDropdown">
+                            <i class="bi bi-arrow-repeat me-1"></i>Update Status
+                        </button>
+                        <ul class="dropdown-menu @(_showStatusDropdown ? "show" : "")" style="@(_showStatusDropdown ? "display: block;" : "")">
+                            <li><a class="dropdown-item" href="#" @onclick="BulkUpdateToTodo" @onclick:preventDefault="true">
+                                    <span class="badge bg-secondary me-2">TODO</span>Mark as TODO
+                                </a></li>
+                            <li><a class="dropdown-item" href="#" @onclick="BulkUpdateToWip" @onclick:preventDefault="true">
+                                    <span class="badge bg-warning me-2">WIP</span>Mark as WIP
+                                </a></li>
+                            <li><a class="dropdown-item" href="#" @onclick="BulkUpdateToReview" @onclick:preventDefault="true">
+                                    <span class="badge bg-info me-2">REVIEW</span>Mark as Review
+                                </a></li>
+                            <li><a class="dropdown-item" href="#" @onclick="BulkUpdateToDone" @onclick:preventDefault="true">
+                                    <span class="badge bg-success me-2">DONE</span>Mark as Done
+                                </a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-outline-danger me-2" @onclick="ShowBulkDeleteConfirmation">
+                        <i class="bi bi-trash me-1"></i>Delete Selected
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="ClearSelection">
+                        <i class="bi bi-x-circle me-1"></i>Clear Selection
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (_isLoading)
+        {
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading your TODO items...</p>
+            </div>
+        }
+        else if (_todoItems == null || !_todoItems.Any())
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No TODO items yet</h4>
+                <p class="text-muted">Create your first TODO item to get started!</p>
+                <a href="/create-todo" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Create First TODO
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
                     <tr>
+                        <th>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllCheckbox"
+                                       checked="@(_todoItems != null && _todoItems.Any() && _todoItems.All(x => x.IsSelected))"
+                                       @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)e.Value))">
+                                <label class="form-check-label" for="selectAllCheckbox">
+                                    Select All
+                                </label>
+                            </div>
+                        </th>
                         <th>Status</th>
                         <th>Category</th>
                         <th>Description</th>
-                        <th>Created At</th>
+                        <th>Created</th>
+                        <th>Actions</th>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in todoItems)
+                    </thead>
+                    <tbody>
+                    @foreach (var item in _todoItems)
                     {
-                        <tr>
+                        <tr class="@(item.IsCompleted ? "table-success" : "")">
                             <td>
-                                <span class="badge @(item.Status == "Done" ? "bg-success" : "bg-warning text-dark")">
-                                    @item.Status
-                                </span>
+                                <div class="form-check">
+                                    <input class="form-check-input todo-item-checkbox" type="checkbox"
+                                           checked="@item.IsSelected" 
+                                           @onchange="@((ChangeEventArgs e) => OnItemSelectionChanged(item, (bool)e.Value))">
+                                </div>
                             </td>
-                            <td><span class="badge bg-info text-dark">@item.Category</span></td>
-                            <td class="@(item.Status == "Done" ? "text-muted text-decoration-line-through" : "")">
+                            <td>
+                                @if (item.Status == "TODO")
+                                {
+                                    <span class="badge bg-secondary">TODO</span>
+                                }
+                                else if (item.Status == "WIP")
+                                {
+                                    <span class="badge bg-warning">WIP</span>
+                                }
+                                else if (item.Status == "REVIEW")
+                                {
+                                    <span class="badge bg-info">REVIEW</span>
+                                }
+                                else if (item.Status == "DONE")
+                                {
+                                    <span class="badge bg-success">DONE</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">@item.Category</span>
+                            </td>
+                            <td class="@(item.IsCompleted ? "text-decoration-line-through text-muted" : "")">
                                 @item.Description
                             </td>
-                            <td>@item.CreatedAt.ToShortDateString()</td>
+                            <td class="text-muted small">
+                                @item.CreatedAt.ToString("MMM dd, yyyy")
+                            </td>
                             <td>
-                                @if (item.Status == "WIP")
-                                {
-                                    <button class="btn btn-sm btn-outline-success me-1" @onclick="() => MarkAsDone(item.Id)">완료</button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-sm btn-outline-warning me-1" @onclick="() => MarkAsWip(item.Id)">미완료</button>
-                                }
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTodo(item.Id)">삭제</button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    @if (item.Status != "DONE")
+                                    {
+                                        <button class="btn btn-outline-success" @onclick="() => MarkAsDone(item.Id)"
+                                                title="Mark as Done">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    }
+                                    @if (item.Status != "WIP")
+                                    {
+                                        <button class="btn btn-outline-warning" @onclick="() => MarkAsWip(item.Id)"
+                                                title="Mark as WIP">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                        </button>
+                                    }
+                                    @if (item.Status != "REVIEW")
+                                    {
+                                        <button class="btn btn-outline-info" @onclick="() => MarkAsReview(item.Id)"
+                                                title="Mark as Review">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    }
+                                    <button class="btn btn-outline-danger" @onclick="() => DeleteTodo(item.Id)"
+                                            title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">@_todoItems.Count(x => x.Status == "TODO")</h5>
+                                <p class="card-text">TODO</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">@_todoItems.Count(x => x.Status == "WIP")</h5>
+                                <p class="card-text">In Progress</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">@_todoItems.Count(x => x.Status == "REVIEW")</h5>
+                                <p class="card-text">Review</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">@_todoItems.Count(x => x.Status == "DONE")</h5>
+                                <p class="card-text">Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="alert alert-danger mt-4" role="alert">
+                @_errorMessage
+            </div>
+        }
+
+        @* Delete All Confirmation Modal *@
+        @if (_showDeleteAllModal)
+        {
+            <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirm Delete All
+                            </h5>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete <strong>all @_todoItems?.Count TODO items</strong>?</p>
+                            <p class="text-danger"><small><i class="bi bi-info-circle me-1"></i>This action cannot be
+                                    undone.</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideDeleteAllConfirmation">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAll"
+                                    disabled="@_isDeleting">
+                                @if (_isDeleting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Deleting...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-trash3 me-1"></i>
+                                    <span>Delete All</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* Bulk Delete Confirmation Modal *@
+        @if (_showBulkDeleteModal)
+        {
+            <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-exclamation-triangle text-warning me-2"></i>Confirm Delete Selected
+                            </h5>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete <strong>@_selectedItems.Count TODO items</strong>?</p>
+                            <p class="text-danger"><small><i class="bi bi-info-circle me-1"></i>This action cannot be
+                                    undone.</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideBulkDeleteConfirmation">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn-danger" @onclick="ConfirmBulkDelete"
+                                    disabled="@_isBulkDeleting">
+                                @if (_isBulkDeleting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Deleting...</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-trash3 me-1"></i>
+                                    <span>Delete Selected</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     }
 </div>
 
 @code {
-    private List<TodoItem>? todoItems;
+    private List<ToDoItems>? _todoItems;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+    private bool _showDeleteAllModal;
+    private bool _isDeleting;
+
+    private List<ToDoItems> _selectedItems = new();
+    private bool _showBulkDeleteModal;
+    private bool _isBulkDeleting;
+    private bool _showStatusDropdown;
+
+    protected override void OnInitialized()
+    {
+        AuthService.OnAuthStateChanged += HandleAuthStateChanged;
+        CheckLoginStatus();
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshTodos();
+        if (AuthService.IsLoggedIn)
+        {
+            await RefreshTodos();
+        }
+
+        _isLoading = false;
     }
 
-    private async Task MarkAsDone(Guid id)
+    private void CheckLoginStatus()
     {
-        await TodoService.UpdateTodoItemStatusAsync(id, "Done");
-        await RefreshTodos();
+        if (!AuthService.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
     }
 
-    private async Task MarkAsWip(Guid id)
+    private async void HandleAuthStateChanged()
     {
-        await TodoService.UpdateTodoItemStatusAsync(id, "WIP");
-        await RefreshTodos();
-    }
-
-    private async Task DeleteTodo(Guid id)
-    {
-        await TodoService.DeleteTodoItemAsync(id);
-        await RefreshTodos();
+        await InvokeAsync(() =>
+        {
+            CheckLoginStatus();
+            StateHasChanged();
+        });
     }
 
     private async Task RefreshTodos()
     {
-        todoItems = await TodoService.GetTodoItemsAsync();
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var todos = await TodoService.GetTodoItemsAsync();
+            
+            // Order: TODO -> WIP -> REVIEW -> DONE
+            _todoItems = todos?.OrderBy(item => GetStatusOrder(item.Status)).ToList();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading TODO items: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private int GetStatusOrder(string status)
+    {
+        return status switch
+        {
+            "TODO" => 1,
+            "WIP" => 2,
+            "REVIEW" => 3,
+            "DONE" => 4,
+            _ => 5 // 기타 상태는 맨 마지막
+        };
+    }
+
+    private async Task MarkAsDone(Guid id)
+    {
+        try
+        {
+            _errorMessage = null;
+            await TodoService.UpdateTodoStatusAsync(id, "DONE");
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to mark as done: {ex.Message}";
+            Console.WriteLine($"Error updating TODO status: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task MarkAsWip(Guid id)
+    {
+        try
+        {
+            _errorMessage = null;
+            await TodoService.UpdateTodoStatusAsync(id, "WIP");
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to mark as WIP: {ex.Message}";
+            Console.WriteLine($"Error updating TODO status: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task MarkAsReview(Guid id)
+    {
+        try
+        {
+            _errorMessage = null;
+            await TodoService.UpdateTodoStatusAsync(id, "REVIEW");
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to mark as review: {ex.Message}";
+            Console.WriteLine($"Error updating TODO status: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteTodo(Guid id)
+    {
+        try
+        {
+            _errorMessage = null;
+            await TodoService.DeleteTodoAsync(id);
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to delete TODO: {ex.Message}";
+            Console.WriteLine($"Error deleting TODO: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteAllTodos()
+    {
+        try
+        {
+            _errorMessage = null;
+            _isDeleting = true;
+            StateHasChanged();
+
+            await TodoService.DeleteAllTodosAsync();
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to delete TODOs: {ex.Message}";
+            Console.WriteLine($"Error deleting TODOs: {ex.Message}");
+            StateHasChanged();
+        }
+        finally
+        {
+            _isDeleting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteSelectedTodos()
+    {
+        try
+        {
+            _errorMessage = null;
+            _isBulkDeleting = true;
+            StateHasChanged();
+
+            foreach (var item in _selectedItems)
+            {
+                await TodoService.DeleteTodoAsync(item.Id);
+            }
+
+            _selectedItems.Clear();
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to delete selected TODOs: {ex.Message}";
+            Console.WriteLine($"Error deleting selected TODOs: {ex.Message}");
+            StateHasChanged();
+        }
+        finally
+        {
+            _isBulkDeleting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleSelectAll(bool selectAll)
+    {
+        if (_todoItems == null) return;
+        
+        foreach (var item in _todoItems)
+        {
+            item.IsSelected = selectAll;
+        }
+        
+        UpdateSelectedItems();
         StateHasChanged();
+    }
+
+    private void OnItemSelectionChanged(ToDoItems item, bool isSelected)
+    {
+        item.IsSelected = isSelected;
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+
+    private void UpdateSelection(ToDoItems item)
+    {
+        // The checkbox binding will handle the IsSelected state
+        // We just need to update our selected items list
+        UpdateSelectedItems();
+        StateHasChanged();
+    }
+
+    private void UpdateSelectedItems()
+    {
+        if (_todoItems == null)
+        {
+            _selectedItems.Clear();
+            return;
+        }
+
+        _selectedItems = _todoItems.Where(x => x.IsSelected).ToList();
+    }
+
+    private void ClearSelection()
+    {
+        if (_todoItems == null) return;
+
+        foreach (var item in _todoItems)
+        {
+            item.IsSelected = false;
+        }
+        
+        _selectedItems.Clear();
+        StateHasChanged();
+    }
+
+    private async Task BulkUpdateToTodo()
+    {
+        _showStatusDropdown = false;
+        await BulkUpdateStatus("TODO");
+    }
+
+    private async Task BulkUpdateToWip()
+    {
+        _showStatusDropdown = false;
+        await BulkUpdateStatus("WIP");
+    }
+
+    private async Task BulkUpdateToReview()
+    {
+        _showStatusDropdown = false;
+        await BulkUpdateStatus("REVIEW");
+    }
+
+    private async Task BulkUpdateToDone()
+    {
+        _showStatusDropdown = false;
+        await BulkUpdateStatus("DONE");
+    }
+
+    private async Task BulkUpdateStatus(string status)
+    {
+        try
+        {
+            _errorMessage = null;
+
+            foreach (var item in _selectedItems)
+            {
+                await TodoService.UpdateTodoStatusAsync(item.Id, status);
+            }
+
+            ClearSelection();
+            await RefreshTodos();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to update status: {ex.Message}";
+            Console.WriteLine($"Error updating TODO status: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+
+    // Modal methods
+    private void ShowDeleteAllConfirmation()
+    {
+        _showDeleteAllModal = true;
+    }
+
+    private void HideDeleteAllConfirmation()
+    {
+        _showDeleteAllModal = false;
+    }
+
+    private async Task ConfirmDeleteAll()
+    {
+        await DeleteAllTodos();
+        HideDeleteAllConfirmation();
+    }
+
+    private void ShowBulkDeleteConfirmation()
+    {
+        _showBulkDeleteModal = true;
+    }
+
+    private void HideBulkDeleteConfirmation()
+    {
+        _showBulkDeleteModal = false;
+    }
+
+    private async Task ConfirmBulkDelete()
+    {
+        await DeleteSelectedTodos();
+        HideBulkDeleteConfirmation();
+    }
+
+    private void ToggleStatusDropdown()
+    {
+        _showStatusDropdown = !_showStatusDropdown;
+    }
+
+    public void Dispose()
+    {
+        AuthService.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 }

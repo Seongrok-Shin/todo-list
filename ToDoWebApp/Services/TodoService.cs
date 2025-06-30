@@ -1,97 +1,248 @@
 ﻿using Supabase;
 using System.Text.RegularExpressions;
-using Supabase.Postgrest;
+using static Supabase.Postgrest.Constants;
 using ToDoWebApp.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ToDoWebApp.Services
 {
     public class TodoService
     {
         private readonly Supabase.Client _supabaseClient;
+        private readonly AuthService _authService;
+        private readonly ILogger<TodoService> _logger;
 
-        public TodoService(Supabase.Client supabaseClient)
+        public TodoService(Supabase.Client supabaseClient, AuthService authService, ILogger<TodoService> logger)
         {
             _supabaseClient = supabaseClient;
+            _authService = authService;
+            _logger = logger;
         }
 
-        public async Task<List<TodoItem>> GetTodoItemsAsync()
-        {
-            var response = await _supabaseClient.From<TodoItem>()
-                .Order(x => x.Status, Constants.Ordering.Ascending)
-                .Order(x => x.CreatedAt, Constants.Ordering.Descending)
-                .Get();
-            return response.Models;
-        }
-
+        // Parse and add TODO items from text
         public async Task AddTodoItemsFromTextAsync(string todoText)
         {
             if (string.IsNullOrWhiteSpace(todoText))
             {
-                throw new ArgumentException("Enter ToDo item");
+                throw new ArgumentException("TODO text cannot be empty.");
             }
 
-            var lines = todoText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            var newTodoItems = new List<TodoItem>();
+            if (!_authService.IsLoggedIn || _authService.CurrentUser == null)
+            {
+                throw new UnauthorizedAccessException("User must be logged in to create TODO items.");
+            }
+
+            var lines = todoText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var todoItems = new List<ToDoItems>();
 
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
-                if (string.IsNullOrWhiteSpace(trimmedLine)) continue;
+                if (string.IsNullOrEmpty(trimmedLine)) continue;
 
-                var todoItem = new TodoItem();
-                var regex = new Regex(@"^\[(Done|WIP)\]\s*\[([A-Za-z0-9\/]+)\]\s*(.*)$");
-                var match = regex.Match(trimmedLine);
-
-                if (match.Success)
+                var todoItem = ParseTodoLine(trimmedLine);
+                if (todoItem != null)
                 {
-                    todoItem.Status = match.Groups[1].Value;
-                    todoItem.Category = match.Groups[2].Value;
-                    todoItem.Description = match.Groups[3].Value.Trim();
+                    todoItem.UserId = Guid.Parse(_authService.CurrentUser.Id);
+                    todoItem.CreatedAt = DateTime.UtcNow;
+                    todoItems.Add(todoItem);
                 }
-                else
-                {
-                    todoItem.Status = "WIP";
-                    todoItem.Category = "General";
-                    todoItem.Description = trimmedLine;
-                }
-
-                newTodoItems.Add(todoItem);
             }
 
-            if (newTodoItems.Any())
+            if (todoItems.Count == 0)
             {
-                await _supabaseClient.From<TodoItem>().Insert(newTodoItems);
+                throw new ArgumentException("No valid TODO items found in the provided text.");
+            }
+
+            // Insert all TODO items
+            try
+            {
+                await _supabaseClient.From<ToDoItems>().Insert(todoItems);
+                _logger.LogInformation($"Successfully created {todoItems.Count} TODO items for user {_authService.CurrentUser.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inserting TODO items into database");
+                throw;
             }
         }
 
-        public async Task UpdateTodoItemStatusAsync(Guid id, string newStatus)
+        // Parse a single TODO line
+        private ToDoItems? ParseTodoLine(string line)
         {
-            var response = await _supabaseClient.From<TodoItem>()
-                .Where(x => x.Id == id)
-                .Set(x => x.Status, newStatus)
-                .Update();
-            if (!response.Models.Any())
+            // Regex pattern to match [STATUS] [CATEGORY] Description
+            var pattern = @"^\[(\w+)\]\s*\[(\w+)\]\s*(.+)$";
+            var match = Regex.Match(line, pattern, RegexOptions.IgnoreCase);
+
+            if (!match.Success)
             {
-                throw new InvalidOperationException($"Cannot find ID {id} in the TODO List.");
+                _logger.LogWarning($"Invalid TODO format: {line}");
+                return null;
+            }
+
+            var status = match.Groups[1].Value.ToUpper();
+            var category = match.Groups[2].Value.ToUpper();
+            var description = match.Groups[3].Value.Trim();
+
+            // Validate status
+            if (!IsValidStatus(status))
+            {
+                _logger.LogWarning($"Invalid status '{status}' in line: {line}");
+                return null;
+            }
+
+            return new ToDoItems
+            {
+                Status = status,
+                Category = category,
+                Description = description
+            };
+        }
+
+        // Validate if status is one of the allowed values
+        private bool IsValidStatus(string status)
+        {
+            var validStatuses = new[] { "TODO", "WIP", "REVIEW", "DONE" };
+            return validStatuses.Contains(status);
+        }
+
+        // Get all TODO items for current user
+        public async Task<List<ToDoItems>> GetTodoItemsAsync()
+        {
+            if (!_authService.IsLoggedIn || _authService.CurrentUser == null)
+            {
+                throw new UnauthorizedAccessException("User must be logged in to view TODO items.");
+            }
+
+            try
+            {
+                var userId = Guid.Parse(_authService.CurrentUser.Id);
+                var response = await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.UserId == userId)
+                    .Order(x => x.CreatedAt, Ordering.Descending)
+                    .Get();
+
+                return response.Models;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving TODO items from database");
+                throw;
             }
         }
 
-        public async Task DeleteTodoItemAsync(Guid id)
+        // Update TODO item status
+        public async Task UpdateTodoStatusAsync(Guid todoId, string newStatus)
         {
-            // Check ID is existed
-            var existingItem = await _supabaseClient.From<TodoItem>()
-                .Where(x => x.Id == id)
-                .Get();
-
-            if (!existingItem.Models.Any())
+            if (!_authService.IsLoggedIn || _authService.CurrentUser == null)
             {
-                throw new InvalidOperationException($"Cannot find ID {id} in the TODO List.");
+                throw new UnauthorizedAccessException("User must be logged in to update TODO items.");
             }
 
-            // If the item exists, delete it.
-            await _supabaseClient.From<TodoItem>()
-                .Where(x => x.Id == id)
-                .Delete();
+            if (!IsValidStatus(newStatus))
+            {
+                throw new ArgumentException($"Invalid status: {newStatus}");
+            }
+
+            try
+            {
+                var userId = Guid.Parse(_authService.CurrentUser.Id);
+                _logger.LogInformation($"Attempting to update TODO {todoId} to status {newStatus} for user {userId}");
+                
+                // 먼저 기존 항목을 가져옴
+                var existingItems = await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.Id == todoId && x.UserId == userId)
+                    .Get();
+
+                if (!existingItems.Models.Any())
+                {
+                    throw new InvalidOperationException("TODO item not found or access denied.");
+                }
+
+                var existingItem = existingItems.Models.First();
+                
+                // 상태와 업데이트 시간만 변경
+                existingItem.Status = newStatus;
+                existingItem.UpdatedAt = DateTime.UtcNow;
+
+                var result = await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.Id == todoId && x.UserId == userId)
+                    .Update(existingItem);
+
+                _logger.LogInformation($"Successfully updated TODO item {todoId} status to {newStatus}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating TODO item {todoId} to status {newStatus}: {ex.Message}");
+                throw;
+            }
+        }
+
+        // Delete TODO item
+        public async Task DeleteTodoAsync(Guid todoId)
+        {
+            if (!_authService.IsLoggedIn || _authService.CurrentUser == null)
+            {
+                throw new UnauthorizedAccessException("User must be logged in to delete TODO items.");
+            }
+
+            try
+            {
+                var userId = Guid.Parse(_authService.CurrentUser.Id);
+                await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.Id == todoId && x.UserId == userId)
+                    .Delete();
+
+                _logger.LogInformation($"Deleted TODO item {todoId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting TODO item {todoId}");
+                throw;
+            }
+        }
+
+        // Delete all TODO items for current user
+        public async Task DeleteAllTodosAsync()
+        {
+            if (!_authService.IsLoggedIn || _authService.CurrentUser == null)
+            {
+                throw new UnauthorizedAccessException("User must be logged in to delete TODO items.");
+            }
+
+            try
+            {
+                var userId = Guid.Parse(_authService.CurrentUser.Id);
+                
+                // Check Items
+                var itemsToDelete = await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.UserId == userId)
+                    .Get();
+
+                if (itemsToDelete.Models.Count == 0)
+                {
+                    _logger.LogInformation("No TODO items found to delete");
+                    return;
+                }
+
+                // Delete All
+                await _supabaseClient
+                    .From<ToDoItems>()
+                    .Where(x => x.UserId == userId)
+                    .Delete();
+
+                _logger.LogInformation($"Deleted all {itemsToDelete.Models.Count} TODO items for user {userId}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting all TODO items");
+                throw;
+            }
         }
     }
 }

@@ -42,18 +42,47 @@ namespace ToDoWebApp.Services
         {
             try
             {
+                // First, check if user already exists by trying to sign in
+                var existingUserCheck = await _supabaseClient.Auth.SignIn(email, password);
+                if (existingUserCheck?.User != null)
+                {
+                    // User exists and password is correct - sign them out immediately
+                    await _supabaseClient.Auth.SignOut();
+                    CurrentUser = null;
+                    OnAuthStateChanged?.Invoke();
+                    return (null, "User already registered");
+                }
+            }
+            catch
+            {
+                // If sign in fails, it means user doesn't exist or password is wrong
+                // Continue with signup process
+            }
+
+            try
+            {
                 var response = await _supabaseClient.Auth.SignUp(email, password);
                 if (response?.User != null)
                 {
-                    CurrentUser = response.User;
+                    // Don't automatically log in the user after signup
+                    // Just return the user info for confirmation but don't set CurrentUser
+                    await _supabaseClient.Auth.SignOut(); // Ensure we're signed out
+                    CurrentUser = null;
                     OnAuthStateChanged?.Invoke();
-                    // Email confirmation may be required depending on Supabase settings
-                    return (response.User, response.User.EmailConfirmedAt == null ? "Sign up successful! Email confirmation required." : null);
+                    
+                    return (response.User, response.User.EmailConfirmedAt == null ? "Sign up successful! Email confirmation required." : "Sign up successful!");
                 }
                 return (null, "Sign up failed: Unknown error");
             }
             catch (Exception ex)
             {
+                // Check if the error message indicates user already exists
+                if (ex.Message.Contains("User already registered") || 
+                    ex.Message.Contains("already exists") || 
+                    ex.Message.Contains("duplicate"))
+                {
+                    return (null, "User already registered");
+                }
                 return (null, $"Sign up failed: {ex.Message}");
             }
         }
@@ -97,8 +126,11 @@ namespace ToDoWebApp.Services
                 OnAuthStateChanged?.Invoke();
             }
             
+            // Small delay to allow UI state changes to complete before navigation
+            await Task.Delay(100);
+            
             // Navigate without forceLoad to avoid TaskCanceledException
-            _navigationManager.NavigateTo("/");
+            _navigationManager.NavigateTo("/", false);
         }
 
         // Check if user is logged in

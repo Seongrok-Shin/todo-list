@@ -355,20 +355,27 @@ FodyWeavers.xsd
 # Environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.development
+.env.production
 
-# Application specific
-appsettings.Development.json
-appsettings.Production.json
+# Build results
+bin/
+obj/
+
+# User-specific files
 *.user
-*.suo
-*.cache
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+*.userosscache
+*.sln.docstates
 
-*.bin
-ToDoWebApp/bin
-ToDoWebApp/obj
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userprefs
+
+# Rider
+.idea/
+
+# Others
+*.log
+*.tmp

@@ -1,0 +1,38 @@
+﻿@page "/redirect"
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+@using Microsoft.AspNetCore.Components
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <script>
+        window.redirectToApp = (blazorUrl) => {
+            // Extract the hash parameters from the current URL
+            const hash = window.location.hash;
+            
+            // Redirect to the correct Blazor app URL with the same parameters
+            if (hash) {
+                window.location.href = `${blazorUrl}/auth/callback${hash}`;
+            } else {
+                window.location.href = blazorUrl;
+            }
+        };
+    </script>
+</head>
+<body>
+    <p>Redirecting to your application...</p>
+</body>
+</html>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var blazorUrl = Configuration["BLAZOR_APP_URL"] ?? "http://localhost:5168";
+            await JSRuntime.InvokeVoidAsync("redirectToApp", blazorUrl);
+        }
+    }
+}
