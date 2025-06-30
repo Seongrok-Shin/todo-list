@@ -44,5 +44,10 @@ EXPOSE 8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:8080
 
+# Add health check to monitor container health
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD dotnet --info > /dev/null && \
+      timeout 5s bash -c "</dev/tcp/localhost/8080" || exit 1
+
 # Set the entry point
 ENTRYPOINT ["dotnet", "ToDoWebApp.dll"]
