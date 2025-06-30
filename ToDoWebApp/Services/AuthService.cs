@@ -1,5 +1,6 @@
 ﻿using Supabase.Gotrue;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 
 namespace ToDoWebApp.Services
 {
@@ -7,14 +8,16 @@ namespace ToDoWebApp.Services
     {
         private readonly Supabase.Client _supabaseClient;
         private readonly NavigationManager _navigationManager;
+        private readonly ILogger<AuthService> _logger;
 
         public User? CurrentUser { get; private set; } // Current logged-in user information
         public event Action? OnAuthStateChanged; // Event to subscribe to authentication state changes
 
-        public AuthService(Supabase.Client supabaseClient, NavigationManager navigationManager)
+        public AuthService(Supabase.Client supabaseClient, NavigationManager navigationManager, ILogger<AuthService> logger)
         {
             _supabaseClient = supabaseClient;
             _navigationManager = navigationManager;
+            _logger = logger;
 
             // Initialize current user on service creation
             InitializeCurrentUser();
@@ -30,7 +33,7 @@ namespace ToDoWebApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error getting initial user: {ex.Message}");
+                _logger.LogError(ex, "Error getting initial user");
             }
         }
 
@@ -84,7 +87,7 @@ namespace ToDoWebApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error during sign out: {ex.Message}");
+                _logger.LogError(ex, "Error during sign out");
                 // Continue with cleanup even if sign out fails
             }
             finally
@@ -111,7 +114,7 @@ namespace ToDoWebApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error refreshing user: {ex.Message}");
+                _logger.LogError(ex, "Error refreshing user");
                 return Task.CompletedTask;
             }
         }
