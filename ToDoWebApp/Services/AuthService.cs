@@ -81,17 +81,18 @@ namespace ToDoWebApp.Services
             try
             {
                 await _supabaseClient.Auth.SignOut();
-                CurrentUser = null;
-                OnAuthStateChanged?.Invoke();
-                _navigationManager.NavigateTo("/", forceLoad: true); // Navigate to home and refresh entire app
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error during sign out: {ex.Message}");
-                // Force clear user state even if sign out fails
+                // Continue with cleanup even if sign out fails
+            }
+            finally
+            {
+                // Always clear user state and navigate, regardless of success or failure
                 CurrentUser = null;
                 OnAuthStateChanged?.Invoke();
-                _navigationManager.NavigateTo("/", forceLoad: true);
+                _navigationManager.NavigateTo("/", forceLoad: true); // Navigate to home and refresh entire app
             }
         }
 
