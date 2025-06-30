@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add Supabase client
 builder.Services.AddSingleton(provider =>
 {
     var url = builder.Configuration["Supabase:Url"];
@@ -23,7 +24,9 @@ builder.Services.AddSingleton(provider =>
     });
 });
 
+// Register services
 builder.Services.AddScoped<TodoService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.
@@ -35,7 +38,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 
