@@ -12,431 +12,437 @@
     @* Display content based on login status *@
     @if (!AuthService.IsLoggedIn)
     {
-        <div class="alert alert-warning text-center" role="alert">
-            <h4 class="alert-heading">Login Required</h4>
-            <p>You need to <a href="/login" class="alert-link">sign in</a> to create TODO items.</p>
-        </div>
+    <div class="alert alert-warning text-center" role="alert">
+        <h4 class="alert-heading">Login Required</h4>
+        <p>You need to <a href="/login" class="alert-link">sign in</a> to create TODO items.</p>
+    </div>
     }
     else
     {
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h2 class="card-title mb-0">
-                            <i class="bi bi-plus-circle me-2"></i>Create New TODO
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        @* Input Method Toggle *@
-                        <div class="mb-4">
-                            <h6>Choose input method:</h6>
-                            <div class="btn-group" role="group" aria-label="Input method selection">
-                                <button type="button" class="btn @(!_useFormMode ? "btn-primary" : "btn-outline-primary")" @onclick="SwitchToTextMode">
-                                    <i class="bi bi-textarea-t me-1"></i>Text Input
-                                </button>
-                                <button type="button" class="btn @(_useFormMode ? "btn-primary" : "btn-outline-primary")" @onclick="SwitchToFormMode">
-                                    <i class="bi bi-ui-checks me-1"></i>Form Input
-                                </button>
-                            </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-custom">
+                <div class="card-header card-header-custom">
+                    <h2 class="card-title card-title-custom">
+                        <i class="bi bi-plus-circle me-2"></i>Create New TODO
+                    </h2>
+                </div>
+                <div class="card-body card-body-custom">
+                    @* Input Method Toggle *@
+                    <div class="mb-4">
+                        <h6>Choose input method:</h6>
+                        <div role="group" aria-label="Input method selection">
+                            <button type="button" class="btn @(!_useFormMode ? "btn-primary" : "btn-outline-secondary")"
+                                    @onclick="SwitchToTextMode">
+                                <i class="bi bi-textarea-t me-1"></i>Text Input
+                            </button>
+                            <button type="button" class="btn @(_useFormMode ? "btn-primary" : "btn-outline-secondary")"
+                                    @onclick="SwitchToFormMode">
+                                <i class="bi bi-ui-checks me-1"></i>Form Input
+                            </button>
                         </div>
+                    </div>
 
-                        @if (!_useFormMode)
+                    @if (!_useFormMode)
+                    {
+                    @* Text Input Mode *@
+                    <EditForm Model="this" OnValidSubmit="HandleTextSubmit" FormName="createTodoTextForm">
+                        <DataAnnotationsValidator/>
+
+                        @if (!string.IsNullOrEmpty(_errorMessage))
                         {
-                            @* Text Input Mode *@
-                            <EditForm Model="this" OnValidSubmit="HandleTextSubmit" FormName="createTodoTextForm">
-                                <DataAnnotationsValidator/>
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
+                        </div>
+                        }
 
-                                @if (!string.IsNullOrEmpty(_errorMessage))
-                                {
-                                    <div class="alert alert-danger" role="alert">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
-                                    </div>
-                                }
+                        @if (!string.IsNullOrEmpty(_successMessage))
+                        {
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>@_successMessage
+                        </div>
+                        }
 
-                                @if (!string.IsNullOrEmpty(_successMessage))
-                                {
-                                    <div class="alert alert-success" role="alert">
-                                        <i class="bi bi-check-circle me-2"></i>@_successMessage
-                                    </div>
-                                }
-
-                                <div class="mb-3">
-                                    <label for="TodoText" class="form-label fw-bold">TODO Items</label>
-                                    <InputTextArea class="form-control"
-                                                   id="TodoText"
-                                                   @bind-Value="TodoText"
-                                                   rows="12"
-                                                   placeholder="Enter your TODO items (one per line): 
+                        <div class="mb-3">
+                            <label for="TodoText" class="form-label form-label-custom">TODO Items</label>
+                            <InputTextArea class="form-control"
+                                           id="TodoText"
+                                           @bind-Value="TodoText"
+                                           rows="12"
+                                           placeholder="Enter your TODO items (one per line): 
 Examples:
 [DONE] [UI] Create account - Duplicated account alert
 [WIP] [BE] Implement user login
 [TODO] [UI] Fix navigation menu
 [TODO] [API] Add validation for user input
 [REVIEW] [DOC] Update API documentation"/>
-                                    <ValidationMessage For="() => TodoText" class="text-danger small"/>
-                                    <div class="form-text">
-                                        <small>
-                                            <strong>Format:</strong> [Status] [Category] Description
-                                        </small>
-                                        <br>
-                                        <small>
-                                            <strong>Status:</strong> TODO, WIP, REVIEW, DONE
-                                        </small>
-                                        <br>
-                                        <small>
-                                            <strong>Category:</strong> UI, BE, API, DOC, etc.
-                                        </small>
-                                    </div>
-                                </div>
+                            <ValidationMessage For="() => TodoText" class="text-danger small"/>
+                            <div class="form-text">
+                                <small>
+                                    <strong>Format:</strong> [Status] [Category] Description
+                                </small>
+                                <br>
+                                <small>
+                                    <strong>Status:</strong> TODO, WIP, REVIEW, DONE
+                                </small>
+                                <br>
+                                <small>
+                                    <strong>Category:</strong> UI, BE, API, DOC, etc.
+                                </small>
+                            </div>
+                        </div>
 
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="button" class="btn btn-outline-secondary me-md-2" @onclick="ClearTextForm">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Clear
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" disabled="@_isSubmitting">
-                                        @if (_isSubmitting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Creating...</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-plus-circle me-1"></i>
-                                            <span>Create TODO Items</span>
-                                        }
-                                    </button>
-                                </div>
-                            </EditForm>
-                        }
-                        else
-                        {
-                            @* Form Input Mode *@
-                            <form @onsubmit="HandleFormSubmit" @onsubmit:preventDefault="true">
-
-                                @if (!string.IsNullOrEmpty(_errorMessage))
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary me-md-2" @onclick="ClearTextForm">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Clear
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@_isSubmitting">
+                                @if (_isSubmitting)
                                 {
-                                    <div class="alert alert-danger" role="alert">
-                                        <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
-                                    </div>
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Creating...</span>
                                 }
-
-                                @if (!string.IsNullOrEmpty(_successMessage))
+                                else
                                 {
-                                    <div class="alert alert-success" role="alert">
-                                        <i class="bi bi-check-circle me-2"></i>@_successMessage
-                                    </div>
+                                <i class="bi bi-plus-circle me-1"></i>
+                                <span>Create TODO Items</span>
                                 }
+                            </button>
+                        </div>
+                    </EditForm>
+                    }
+                    else
+                    {
+                    @* Form Input Mode *@
+                    <form @onsubmit="HandleFormSubmit" @onsubmit:preventDefault="true">
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="Status" class="form-label fw-bold">Status <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="Status" @bind="FormStatus">
-                                                <option value="">Select Status</option>
-                                                <option value="TODO">TODO</option>
-                                                <option value="WIP">WIP</option>
-                                                <option value="REVIEW">REVIEW</option>
-                                                <option value="DONE">DONE</option>
-                                            </select>
-                                            @if (string.IsNullOrEmpty(FormStatus) && _showValidationErrors)
-                                            {
-                                                <div class="text-danger small">Please select a status.</div>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="Category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
-                                            <select class="form-select" id="Category" @bind="FormCategory">
-                                                <option value="">Select Category</option>
-                                                <option value="UI">UI - User Interface</option>
-                                                <option value="BE">BE - Backend</option>
-                                                <option value="API">API - API Development</option>
-                                                <option value="DOC">DOC - Documentation</option>
-                                                <option value="TEST">TEST - Testing</option>
-                                                <option value="BUG">BUG - Bug Fix</option>
-                                                <option value="FEATURE">FEATURE - New Feature</option>
-                                                <option value="OTHER">OTHER - Other</option>
-                                            </select>
-                                            @if (string.IsNullOrEmpty(FormCategory) && _showValidationErrors)
-                                            {
-                                                <div class="text-danger small">Please select a category.</div>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="Description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
-                                    <textarea class="form-control"
-                                              id="Description"
-                                              @bind="FormDescription"
-                                              rows="4"
-                                              placeholder="Enter TODO description..."></textarea>
-                                    @if (string.IsNullOrEmpty(FormDescription) && _showValidationErrors)
-                                    {
-                                        <div class="text-danger small">Please enter a description.</div>
-                                    }
-                                </div>
-
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <button type="button" class="btn btn-outline-secondary me-md-2" @onclick="ClearFormInput">
-                                        <i class="bi bi-arrow-clockwise me-1"></i>Clear
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" disabled="@_isSubmitting">
-                                        @if (_isSubmitting)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                            <span>Creating...</span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-plus-circle me-1"></i>
-                                            <span>Create TODO Item</span>
-                                        }
-                                    </button>
-                                </div>
-                            </form>
-                        }
-                    </div>
-                </div>
-
-                @* Help section *@
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-info-circle me-2"></i>How to use
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if (!_useFormMode)
+                        @if (!string.IsNullOrEmpty(_errorMessage))
                         {
-                            <p><strong>Text Input Mode:</strong> Enter multiple TODO items at once using the specified format.</p>
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage
+                        </div>
                         }
-                        else
+
+                        @if (!string.IsNullOrEmpty(_successMessage))
                         {
-                            <p><strong>Form Input Mode:</strong> Create a single TODO item using dropdown selections.</p>
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle me-2"></i>@_successMessage
+                        </div>
                         }
-                        
+
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Status Options:</h6>
-                                <ul class="list-unstyled">
-                                    <li><span class="badge bg-secondary me-2">TODO</span>Not started</li>
-                                    <li><span class="badge bg-warning me-2">WIP</span>Work in progress</li>
-                                    <li><span class="badge bg-info me-2">REVIEW</span>Under review</li>
-                                    <li><span class="badge bg-success me-2">DONE</span>Completed</li>
-                                </ul>
+                                <div class="mb-3">
+                                    <label for="Status" class="form-label form-label-custom">Status <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="Status" @bind="FormStatus">
+                                        <option value="">Select Status</option>
+                                        <option value="TODO">TODO</option>
+                                        <option value="WIP">WIP</option>
+                                        <option value="REVIEW">REVIEW</option>
+                                        <option value="DONE">DONE</option>
+                                    </select>
+                                    @if (string.IsNullOrEmpty(FormStatus) && _showValidationErrors)
+                                    {
+                                    <div class="text-danger small">Please select a status.</div>
+                                    }
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <h6>Category Examples:</h6>
-                                <ul class="list-unstyled">
-                                    <li><span class="badge bg-primary me-2">UI</span>User Interface</li>
-                                    <li><span class="badge bg-primary me-2">BE</span>Backend</li>
-                                    <li><span class="badge bg-primary me-2">API</span>API Development</li>
-                                    <li><span class="badge bg-primary me-2">DOC</span>Documentation</li>
-                                </ul>
+                                <div class="mb-3">
+                                    <label for="Category" class="form-label form-label-custom">Category <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="Category" @bind="FormCategory">
+                                        <option value="">Select Category</option>
+                                        <option value="UI">UI - User Interface</option>
+                                        <option value="BE">BE - Backend</option>
+                                        <option value="API">API - API Development</option>
+                                        <option value="DOC">DOC - Documentation</option>
+                                        <option value="TEST">TEST - Testing</option>
+                                        <option value="BUG">BUG - Bug Fix</option>
+                                        <option value="FEATURE">FEATURE - New Feature</option>
+                                        <option value="OTHER">OTHER - Other</option>
+                                    </select>
+                                    @if (string.IsNullOrEmpty(FormCategory) && _showValidationErrors)
+                                    {
+                                    <div class="text-danger small">Please select a category.</div>
+                                    }
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Description" class="form-label form-label-custom">Description <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control"
+                                      id="Description"
+                                      @bind="FormDescription"
+                                      rows="4"
+                                      placeholder="Enter TODO description..."></textarea>
+                            @if (string.IsNullOrEmpty(FormDescription) && _showValidationErrors)
+                            {
+                            <div class="text-danger small">Please enter a description.</div>
+                            }
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="button" class="btn btn-outline-secondary me-md-2" @onclick="ClearFormInput">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Clear
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@_isSubmitting">
+                                @if (_isSubmitting)
+                                {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                <span>Creating...</span>
+                                }
+                                else
+                                {
+                                <i class="bi bi-plus-circle me-1"></i>
+                                <span>Create TODO Item</span>
+                                }
+                            </button>
+                        </div>
+                    </form>
+                    }
+                </div>
+            </div>
+
+            @* Help section *@
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>How to use
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (!_useFormMode)
+                    {
+                    <p><strong>Text Input Mode:</strong> Enter multiple TODO items at once using the specified format.
+                    </p>
+                    }
+                    else
+                    {
+                    <p><strong>Form Input Mode:</strong> Create a single TODO item using dropdown selections.</p>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Status Options:</h6>
+                            <ul class="list-unstyled">
+                                <li><span class="badge bg-secondary me-2">TODO</span>Not started</li>
+                                <li><span class="badge bg-warning me-2">WIP</span>Work in progress</li>
+                                <li><span class="badge bg-info me-2">REVIEW</span>Under review</li>
+                                <li><span class="badge bg-success me-2">DONE</span>Completed</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Category Examples:</h6>
+                            <ul class="list-unstyled">
+                                <li><span class="badge bg-primary me-2">UI</span>User Interface</li>
+                                <li><span class="badge bg-primary me-2">BE</span>Backend</li>
+                                <li><span class="badge bg-primary me-2">API</span>API Development</li>
+                                <li><span class="badge bg-primary me-2">DOC</span>Documentation</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     }
 </div>
 
 @code {
-    // Text input mode properties
-    [Required(ErrorMessage = "Please enter TODO text.")]
-    public string TodoText { get; set; } = string.Empty;
+// Text input mode properties
+[Required(ErrorMessage = "Please enter TODO text.")]
+public string TodoText { get; set; } = string.Empty;
 
-    // Form input mode properties
-    [Required(ErrorMessage = "Please select a status.")]
-    public string FormStatus { get; set; } = string.Empty;
+// Form input mode properties
+[Required(ErrorMessage = "Please select a status.")]
+public string FormStatus { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Please select a category.")]
-    public string FormCategory { get; set; } = string.Empty;
+[Required(ErrorMessage = "Please select a category.")]
+public string FormCategory { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Please enter a description.")]
-    public string FormDescription { get; set; } = string.Empty;
+[Required(ErrorMessage = "Please enter a description.")]
+public string FormDescription { get; set; } = string.Empty;
 
-    // Common properties
-    private string? _errorMessage;
-    private string? _successMessage;
-    private bool _isSubmitting;
-    private bool _useFormMode = false;
-    private bool _showValidationErrors = false;
+// Common properties
+private string? _errorMessage;
+private string? _successMessage;
+private bool _isSubmitting;
+private bool _useFormMode = false;
+private bool _showValidationErrors = false;
 
-    protected override void OnInitialized()
-    {
-        // Subscribe to AuthService authentication state change events
-        AuthService.OnAuthStateChanged += HandleAuthStateChanged;
-        CheckLoginStatus(); // Check login status when component initializes
-    }
+protected override void OnInitialized()
+{
+// Subscribe to AuthService authentication state change events
+AuthService.OnAuthStateChanged += HandleAuthStateChanged;
+CheckLoginStatus(); // Check login status when component initializes
+}
 
-    // Check login status and redirect if necessary
-    private void CheckLoginStatus()
-    {
-        if (!AuthService.IsLoggedIn)
-        {
-            // Redirect to login page if not logged in
-            // forceLoad: true forces browser refresh to prevent routing issues
-            NavManager.NavigateTo("/login", forceLoad: true);
-        }
-    }
+// Check login status and redirect if necessary
+private void CheckLoginStatus()
+{
+if (!AuthService.IsLoggedIn)
+{
+// Redirect to login page if not logged in
+// forceLoad: true forces browser refresh to prevent routing issues
+NavManager.NavigateTo("/login", forceLoad: true);
+}
+}
 
-    // Method called when authentication state changes
-    private async void HandleAuthStateChanged()
-    {
-        // Use InvokeAsync to call work on UI thread
-        await InvokeAsync(() =>
-        {
-            CheckLoginStatus();
-            StateHasChanged();
-        });
-    }
+// Method called when authentication state changes
+private async void HandleAuthStateChanged()
+{
+// Use InvokeAsync to call work on UI thread
+await InvokeAsync(() =>
+{
+CheckLoginStatus();
+StateHasChanged();
+});
+}
 
-    private void SwitchToTextMode()
-    {
-        _useFormMode = false;
-        ClearMessages();
-        StateHasChanged();
-    }
+private void SwitchToTextMode()
+{
+_useFormMode = false;
+ClearMessages();
+StateHasChanged();
+}
 
-    private void SwitchToFormMode()
-    {
-        _useFormMode = true;
-        ClearMessages();
-        StateHasChanged();
-    }
+private void SwitchToFormMode()
+{
+_useFormMode = true;
+ClearMessages();
+StateHasChanged();
+}
 
-    private void ClearMessages()
-    {
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-    }
+private void ClearMessages()
+{
+_errorMessage = string.Empty;
+_successMessage = string.Empty;
+}
 
-    private async Task HandleTextSubmit()
-    {
-        if (_isSubmitting) return;
+private async Task HandleTextSubmit()
+{
+if (_isSubmitting) return;
 
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-        _isSubmitting = true;
-        StateHasChanged();
+_errorMessage = string.Empty;
+_successMessage = string.Empty;
+_isSubmitting = true;
+StateHasChanged();
 
-        try
-        {
-            await TodoService.AddTodoItemsFromTextAsync(TodoText);
-            _successMessage = "TODO items created successfully!";
-            TodoText = string.Empty; // Clear form after successful submission
+try
+{
+await TodoService.AddTodoItemsFromTextAsync(TodoText);
+_successMessage = "TODO items created successfully!";
+TodoText = string.Empty; // Clear form after successful submission
 
-            // Navigate to todo list after a short delay to show success message
-            await Task.Delay(1500);
-            NavManager.NavigateTo("/todolist", forceLoad: false);
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            _errorMessage = "You must be logged in to create TODO items.";
-            NavManager.NavigateTo("/login", forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"An error occurred while creating TODO items: {ex.Message}";
-            Console.WriteLine($"Error creating TODO items: {ex.Message}");
-        }
-        finally
-        {
-            _isSubmitting = false;
-            StateHasChanged();
-        }
-    }
+// Navigate to todo list after a short delay to show success message
+await Task.Delay(1500);
+NavManager.NavigateTo("/todolist", forceLoad: false);
+}
+catch (ArgumentException ex)
+{
+_errorMessage = ex.Message;
+}
+catch (UnauthorizedAccessException)
+{
+_errorMessage = "You must be logged in to create TODO items.";
+NavManager.NavigateTo("/login", forceLoad: true);
+}
+catch (Exception ex)
+{
+_errorMessage = $"An error occurred while creating TODO items: {ex.Message}";
+Console.WriteLine($"Error creating TODO items: {ex.Message}");
+}
+finally
+{
+_isSubmitting = false;
+StateHasChanged();
+}
+}
 
-    private async Task HandleFormSubmit()
-    {
-        if (_isSubmitting) return;
+private async Task HandleFormSubmit()
+{
+if (_isSubmitting) return;
 
-        // Validate form fields
-        _showValidationErrors = true;
-        if (string.IsNullOrEmpty(FormStatus) || string.IsNullOrEmpty(FormCategory) || string.IsNullOrEmpty(FormDescription))
-        {
-            _errorMessage = "Please fill in all required fields.";
-            StateHasChanged();
-            return;
-        }
+// Validate form fields
+_showValidationErrors = true;
+if (string.IsNullOrEmpty(FormStatus) || string.IsNullOrEmpty(FormCategory) || string.IsNullOrEmpty(FormDescription))
+{
+_errorMessage = "Please fill in all required fields.";
+StateHasChanged();
+return;
+}
 
-        _errorMessage = string.Empty;
-        _successMessage = string.Empty;
-        _showValidationErrors = false;
-        _isSubmitting = true;
-        StateHasChanged();
+_errorMessage = string.Empty;
+_successMessage = string.Empty;
+_showValidationErrors = false;
+_isSubmitting = true;
+StateHasChanged();
 
-        try
-        {
-            // Create the formatted text for single item
-            var formattedText = $"[{FormStatus}] [{FormCategory}] {FormDescription}";
-            await TodoService.AddTodoItemsFromTextAsync(formattedText);
-            
-            _successMessage = "TODO item created successfully!";
-            ClearFormInput(); // Clear form after successful submission
+try
+{
+// Create the formatted text for single item
+var formattedText = $"[{FormStatus}] [{FormCategory}] {FormDescription}";
+await TodoService.AddTodoItemsFromTextAsync(formattedText);
 
-            // Navigate to todo list after a short delay to show success message
-            await Task.Delay(1500);
-            NavManager.NavigateTo("/todolist", forceLoad: false);
-        }
-        catch (ArgumentException ex)
-        {
-            _errorMessage = ex.Message;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            _errorMessage = "You must be logged in to create TODO items.";
-            NavManager.NavigateTo("/login", forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            _errorMessage = $"An error occurred while creating TODO item: {ex.Message}";
-            Console.WriteLine($"Error creating TODO item: {ex.Message}");
-        }
-        finally
-        {
-            _isSubmitting = false;
-            StateHasChanged();
-        }
-    }
+_successMessage = "TODO item created successfully!";
+ClearFormInput(); // Clear form after successful submission
 
-    private void ClearTextForm()
-    {
-        TodoText = string.Empty;
-        ClearMessages();
-        StateHasChanged();
-    }
+// Navigate to todo list after a short delay to show success message
+await Task.Delay(1500);
+NavManager.NavigateTo("/todolist", forceLoad: false);
+}
+catch (ArgumentException ex)
+{
+_errorMessage = ex.Message;
+}
+catch (UnauthorizedAccessException)
+{
+_errorMessage = "You must be logged in to create TODO items.";
+NavManager.NavigateTo("/login", forceLoad: true);
+}
+catch (Exception ex)
+{
+_errorMessage = $"An error occurred while creating TODO item: {ex.Message}";
+Console.WriteLine($"Error creating TODO item: {ex.Message}");
+}
+finally
+{
+_isSubmitting = false;
+StateHasChanged();
+}
+}
 
-    private void ClearFormInput()
-    {
-        FormStatus = string.Empty;
-        FormCategory = string.Empty;
-        FormDescription = string.Empty;
-        _showValidationErrors = false;
-        ClearMessages();
-        StateHasChanged();
-    }
+private void ClearTextForm()
+{
+TodoText = string.Empty;
+ClearMessages();
+StateHasChanged();
+}
 
-    private void HandleInputMethodChange(bool useFormMode)
-    {
-        _useFormMode = useFormMode;
-        ClearMessages();
-        StateHasChanged();
-    }
+private void ClearFormInput()
+{
+FormStatus = string.Empty;
+FormCategory = string.Empty;
+FormDescription = string.Empty;
+_showValidationErrors = false;
+ClearMessages();
+StateHasChanged();
+}
 
-    public void Dispose()
-    {
-        AuthService.OnAuthStateChanged -= HandleAuthStateChanged;
-    }
+private void HandleInputMethodChange(bool useFormMode)
+{
+_useFormMode = useFormMode;
+ClearMessages();
+StateHasChanged();
+}
+
+public void Dispose()
+{
+AuthService.OnAuthStateChanged -= HandleAuthStateChanged;
+}
 
 }

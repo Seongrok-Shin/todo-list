@@ -1,0 +1,142 @@
+﻿.login-container {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    min-height: 100vh;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%) !important;
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: #ffffff;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card-header {
+    border-bottom: none;
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.login-icon {
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 12px 16px;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #2c2c2c;
+}
+
+.form-control:focus {
+    border-color: #6c6c6c;
+    box-shadow: 0 0 0 0.2rem rgba(108, 108, 108, 0.25);
+    transform: translateY(-2px);
+    background: #ffffff;
+}
+
+.input-group-text {
+    border-radius: 10px 0 0 10px;
+    border: 1px solid #e1e5e9;
+    border-right: none;
+    background: #f8f9fa;
+}
+
+.form-control.border-start-0 {
+    border-radius: 0 10px 10px 0;
+    border-left: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+    animation: slideInDown 0.5s ease-out;
+    color: #ffffff;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #6c6c6c 0%, #4a4a4a 100%);
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
+}
+
+.form-label {
+    color: #2c2c2c;
+    font-weight: 600;
+}
+
+.text-muted {
+    color: #6c6c6c !important;
+}
+
+a {
+    color: #4a4a4a;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #2c2c2c;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spinner-border-sm {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

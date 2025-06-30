@@ -6,66 +6,157 @@
 
 <PageTitle>Sign Up</PageTitle>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h3 class="text-center mb-0">Create Account</h3>
-                </div>
-                <div class="card-body">
-                    <EditForm Model="@_signUpModel" OnValidSubmit="@HandleSignUp" FormName="SignUpForm">
-                        <DataAnnotationsValidator />
-                        
-                        @if (!string.IsNullOrEmpty(_errorMessage))
-                        {
-                            <div class="alert alert-danger" role="alert">
+<div class="signup-container min-vh-100 d-flex align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-header bg-gradient-success text-white text-center py-4">
+                        <div class="signup-icon mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
+                                 class="bi bi-person-plus" viewBox="0 0 16 16">
+                                <path
+                                    d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                                <path fill-rule="evenodd"
+                                      d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                            </svg>
+                        </div>
+                        <h1 class="h3 mb-0 fw-bold">Create Account</h1>
+                        <p class="mb-0 opacity-75">Join us today and start organizing your tasks</p>
+                    </div>
+                    <div class="card-body p-5">
+                        <EditForm Model="@_signUpModel" OnValidSubmit="@HandleSignUp" FormName="SignUpForm">
+                            <DataAnnotationsValidator/>
+
+                            @if (!string.IsNullOrEmpty(_errorMessage))
+                            {
+                            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-exclamation-triangle-fill me-2" viewBox="0 0 16 16">
+                                    <path
+                                        d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                </svg>
                                 @_errorMessage
                             </div>
-                        }
-                        
-                        @if (!string.IsNullOrEmpty(_successMessage))
-                        {
-                            <div class="alert alert-success" role="alert">
+                            }
+
+                            @if (!string.IsNullOrEmpty(_successMessage))
+                            {
+                            <div class="alert alert-success d-flex align-items-center" role="alert">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                     class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
+                                    <path
+                                        d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.061L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                </svg>
                                 @_successMessage
                             </div>
-                        }
+                            }
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <InputText @bind-Value="_signUpModel.Email" class="form-control" id="email" placeholder="Enter your email" />
-                            <ValidationMessage For="@(() => _signUpModel.Email)" />
-                        </div>
+                            <div class="mb-4">
+                                <label for="email" class="form-label fw-semibold">Email Address</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                             fill="currentColor" class="bi bi-envelope text-muted" viewBox="0 0 16 16">
+                                            <path
+                                                d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                                        </svg>
+                                    </span>
+                                    <InputText @bind-Value="_signUpModel.Email" class="form-control border-start-0"
+                                               id="email" placeholder="Enter your email"/>
+                                </div>
+                                <ValidationMessage For="@(() => _signUpModel.Email)" class="text-danger small mt-1"/>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <InputText @bind-Value="_signUpModel.Password" type="password" class="form-control" id="password" placeholder="Enter your password" />
-                            <ValidationMessage For="@(() => _signUpModel.Password)" />
-                        </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-semibold">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                             fill="currentColor" class="bi bi-lock text-muted" viewBox="0 0 16 16">
+                                            <path
+                                                d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                                        </svg>
+                                    </span>
+                                    <InputText @bind-Value="_signUpModel.Password" type="password"
+                                               class="form-control border-start-0" id="password"
+                                               placeholder="Enter your password"/>
+                                </div>
+                                <ValidationMessage For="@(() => _signUpModel.Password)" class="text-danger small mt-1"/>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Confirm Password</label>
-                            <InputText @bind-Value="_signUpModel.ConfirmPassword" type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password" />
-                            <ValidationMessage For="@(() => _signUpModel.ConfirmPassword)" />
-                        </div>
+                            <div class="mb-4">
+                                <label for="confirmPassword" class="form-label fw-semibold">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                             fill="currentColor" class="bi bi-shield-lock text-muted"
+                                             viewBox="0 0 16 16">
+                                            <path
+                                                d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+                                            <path
+                                                d="M9.5 6.5a1.5 1.5 0 0 1-1 1.415l.385 1.99a.5.5 0 0 1-.491.595h-.788a.5.5 0 0 1-.49-.595L7.5 7.915A1.5 1.5 0 1 1 9.5 6.5z"/>
+                                        </svg>
+                                    </span>
+                                    <InputText @bind-Value="_signUpModel.ConfirmPassword" type="password"
+                                               class="form-control border-start-0" id="confirmPassword"
+                                               placeholder="Confirm your password"/>
+                                </div>
+                                <ValidationMessage For="@(() => _signUpModel.ConfirmPassword)"
+                                                   class="text-danger small mt-1"/>
+                            </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" disabled="@_isLoading">
-                                @if (_isLoading)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <div class="mb-4">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox"
+                                           @bind="_signUpModel.AcceptTerms"
+                                           @bind:event="onchange"
+                                           class="form-check-input"
+                                           id="acceptTerms"/>
+                                    <label class="form-check-label" for="acceptTerms">
+                                        I agree to the <a href="/terms" target="_blank"
+                                                          class="text-decoration-none fw-semibold">Terms of Service</a>
+                                    </label>
+                                    <ValidationMessage For="@(() => _signUpModel.AcceptTerms)"
+                                                       class="text-danger small mt-1"/>
+                                </div>
+
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           @bind="_signUpModel.AcceptPrivacy"
+                                           @bind:event="onchange"
+                                           class="form-check-input"
+                                           id="acceptPrivacy"/>
+                                    <label class="form-check-label" for="acceptPrivacy">
+                                        I agree to the <a href="/privacy" target="_blank"
+                                                          class="text-decoration-none fw-semibold">Privacy Policy</a>
+                                    </label>
+                                    <ValidationMessage For="@(() => _signUpModel.AcceptPrivacy)"
+                                                       class="text-danger small mt-1"/>
+                                </div>
+                            </div>
+
+                            <div class="d-grid mb-4">
+                                <button type="submit" class="btn btn-success btn-lg py-3" disabled="@_isLoading">
+                                    @if (_isLoading)
+                                    {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"
+                                          aria-hidden="true"></span>
                                     <span>Creating Account...</span>
-                                }
-                                else
-                                {
-                                    <span>Sign Up</span>
-                                }
-                            </button>
-                        </div>
-                    </EditForm>
+                                    }
+                                    else
+                                    {
+                                    <span>Create Account</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
 
-                    <div class="text-center mt-3">
-                        <p>Already have an account? <a href="/login">Sign In</a></p>
+                        <div class="text-center">
+                            <p class="text-muted mb-0">Already have an account?
+                                <a href="/login" class="text-decoration-none fw-semibold">Sign in here</a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -74,70 +165,80 @@
 </div>
 
 @code {
-    private SignUpModel _signUpModel = new();
-    private string? _errorMessage;
-    private string? _successMessage;
-    private bool _isLoading;
+private SignUpModel _signUpModel = new();
+private string? _errorMessage;
+private string? _successMessage;
+private bool _isLoading;
 
-    public class SignUpModel
-    {
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
-        public string Email { get; set; } = string.Empty;
+protected override void OnInitialized()
+{
+// Initialize with default values to prevent null reference issues
+_signUpModel = new SignUpModel();
+}
 
-        [Required(ErrorMessage = "Password is required")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
-        public string Password { get; set; } = string.Empty;
+public class SignUpModel
+{
+[Required(ErrorMessage = "Email is required")]
+[EmailAddress(ErrorMessage = "Please enter a valid email address")]
+public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please confirm your password")]
-        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
-        public string ConfirmPassword { get; set; } = string.Empty;
-    }
+[Required(ErrorMessage = "Password is required")]
+[MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
+public string Password { get; set; } = string.Empty;
 
-    private async Task HandleSignUp()
-    {
-        _errorMessage = null;
-        _successMessage = null;
-        _isLoading = true;
+[Required(ErrorMessage = "Please confirm your password")]
+[Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+public string ConfirmPassword { get; set; } = string.Empty;
 
-        try
-        {
-            var (user, error) = await AuthService.SignUp(_signUpModel.Email, _signUpModel.Password);
-            
-            if (user != null)
-            {
-                // Show success message and redirect regardless of email confirmation status
-                _successMessage = "Account created successfully! Please check your email to verify your account.";
-                StateHasChanged();
-                
-                // Auto-redirect to home after showing success message for 2 seconds
-                await Task.Delay(2000);
-                NavManager.NavigateTo("/");
-            }
-            else
-            {
-                // Check if the error is about user already exists
-                if (!string.IsNullOrEmpty(error) && 
-                    (error.Contains("User already registered") || 
-                     error.Contains("already exists") || 
-                     error.Contains("already registered") ||
-                     error.Contains("duplicate")))
-                {
-                    _errorMessage = "An account with this email address already exists. Please try signing in instead.";
-                }
-                else
-                {
-                    _errorMessage = error ?? "An error occurred during sign up. Please try again.";
-                }
-            }
-        }
-        catch (Exception)
-        {
-            _errorMessage = "An unexpected error occurred. Please try again.";
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
+[Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the Terms of Service")]
+public bool AcceptTerms { get; set; } = false;
+
+[Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the Privacy Policy")]
+public bool AcceptPrivacy { get; set; } = false;
+}
+
+private async Task HandleSignUp()
+{
+_errorMessage = null;
+_successMessage = null;
+_isLoading = true;
+
+try
+{
+var (user, error) = await AuthService.SignUp(_signUpModel.Email, _signUpModel.Password);
+
+if (user != null)
+{
+_successMessage = "Account created successfully! Please check your email to verify your account.";
+StateHasChanged();
+
+await Task.Delay(2000);
+NavManager.NavigateTo("/");
+}
+else
+{
+if (!string.IsNullOrEmpty(error) &&
+(error.Contains("User already registered") ||
+error.Contains("already exists") ||
+error.Contains("already registered") ||
+error.Contains("duplicate")))
+{
+_errorMessage = "An account with this email address already exists. Please try signing in instead.";
+}
+else
+{
+_errorMessage = error ?? "An error occurred during sign up. Please try again.";
+}
+}
+}
+catch (Exception)
+{
+_errorMessage = "An unexpected error occurred. Please try again.";
+}
+finally
+{
+_isLoading = false;
+StateHasChanged();
+}
+}
 }

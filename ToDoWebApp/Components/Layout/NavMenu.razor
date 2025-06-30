@@ -1,11 +1,19 @@
 ﻿@using ToDoWebApp.Services
 @inject AuthService AuthService
-@inject NavigationManager Navigation
+@inject NavigationManager NavManager
 @implements IDisposable
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ToDoWebApp</a>
+        <a class="brand-custom" href="/">
+            <div class="brand-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="brand-text">
+                <span class="brand-name">TODO</span>
+                <span class="brand-subtitle">Manager</span>
+            </div>
+        </a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -14,36 +22,49 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="CollapseNavMenu">
     <nav class="flex-column">
-
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        
         @if (AuthService.IsLoggedIn)
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="todolist" Match="NavLinkMatch.All">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> My Tasks
+                <NavLink class="nav-link" href="/todolist">
+                    <span class="bi bi-list-check-nav-menu" aria-hidden="true"></span> My Tasks
                 </NavLink>
             </div>
-
             <div class="nav-item px-3">
-                <button class="nav-link btn btn-link text-start w-100" @onclick="HandleLogout">
-                    <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout
+                <NavLink class="nav-link" href="/create-todo">
+                    <span class="bi bi-plus-circle-nav-menu" aria-hidden="true"></span> Create TODO
+                </NavLink>
+            </div>
+            
+            <div class="nav-divider"></div>
+            
+            <div class="nav-item px-3">
+                <div class="user-info">
+                    <i class="bi bi-person-circle" aria-hidden="true"></i>
+                    <span class="user-email">@AuthService.GetUserEmail()</span>
+                </div>
+            </div>
+            
+            <div class="nav-item">
+                <button class="nav-logout-btn" @onclick="HandleLogout">
+                    <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sign Out
                 </button>
             </div>
         }
         else
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <NavLink class="nav-link" href="/login">
+                    <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Sign In
                 </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="login">
-                    <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                </NavLink>
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="signup">
+                <NavLink class="nav-link" href="/signup">
                     <span class="bi bi-person-plus-nav-menu" aria-hidden="true"></span> Sign Up
                 </NavLink>
             </div>
@@ -52,50 +73,43 @@
 </div>
 
 @code {
-    private bool _collapseNavMenu = true;
-    private bool _isLoggingOut = false;
+    private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
-
-    protected override void OnInitialized()
-    {
-        AuthService.OnAuthStateChanged += StateHasChanged;
-    }
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
-        _collapseNavMenu = !_collapseNavMenu;
+        collapseNavMenu = !collapseNavMenu;
     }
 
     private void CollapseNavMenu()
     {
-        _collapseNavMenu = true;
+        collapseNavMenu = true;
     }
 
     private async Task HandleLogout()
     {
-        if (_isLoggingOut) return;
-
-        _isLoggingOut = true;
-        StateHasChanged();
-
         try
         {
             await AuthService.SignOut();
+            NavManager.NavigateTo("/");
         }
         catch (Exception)
         {
-            // SignOut method in AuthService already handles errors and navigation
+            // Handle error silently and still navigate
+            NavManager.NavigateTo("/");
         }
-        finally
-        {
-            _isLoggingOut = false;
-        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to auth state changes
+        AuthService.AuthStateChanged += StateHasChanged;
     }
 
     public void Dispose()
     {
-        AuthService.OnAuthStateChanged -= StateHasChanged;
+        // Unsubscribe from auth state changes
+        AuthService.AuthStateChanged -= StateHasChanged;
     }
-
 }
