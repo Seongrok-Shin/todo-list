@@ -1,0 +1,78 @@
+﻿@page "/login"
+@using ToDoWebApp.Services
+@using System.ComponentModel.DataAnnotations
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Login</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@this" OnValidSubmit="HandleLogin" FormName="loginForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="form-group mb-3">
+                            <label for="email">Email Address</label>
+                            <InputText id="email" @bind-Value="Email" class="form-control" />
+                            <ValidationMessage For="@(() => Email)" class="text-danger" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="password">Password</label>
+                            <InputText id="password" @bind-Value="Password" type="password" class="form-control" />
+                            <ValidationMessage For="@(() => Password)" class="text-danger" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(_errorMessage))
+                        {
+                            <div class="alert alert-danger">@_errorMessage</div>
+                        }
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                        <p class="text-center mt-3">
+                            Don't have an account? <a href="/signup">Sign Up</a>
+                        </p>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Required(ErrorMessage = "Please enter your email address.")]
+    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+    public string Email { get; set; } = "";
+
+    [Required(ErrorMessage = "Please enter your password.")]
+    public string Password { get; set; } = "";
+
+    private string? _errorMessage;
+
+    protected override void OnInitialized()
+    {
+        // If already logged in, redirect to home
+        if (AuthService.IsLoggedIn)
+        {
+            NavManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = null; // Clear error message
+        var (user, error) = await AuthService.SignIn(Email, Password);
+        if (user != null)
+        {
+            NavManager.NavigateTo("/", forceLoad: true); // Navigate to home on successful login with force reload
+        }
+        else
+        {
+            _errorMessage = error;
+        }
+    }
+}
